@@ -2,6 +2,14 @@
 import React, { useEffect, useState } from 'react'; // Importamos React y los hooks useEffect y useState.
 import styled from 'styled-components'; // Importamos styled-components para aplicar estilos.
 import { useRouter } from 'next/navigation'; // Importamos useRouter de Next.js para manejar la navegación.
+import deletePost from '../services/deletePost';
+import editPost from '../services/editPost';
+
+
+interface PostUpdate {
+  title: string;
+  description: string;
+}
 
 interface Post {
   id: number;
@@ -120,6 +128,42 @@ const HomePage: React.FC = () => {
     }
   };
 
+
+  const handleDelete = async (postId: number) => {
+    try {
+      await deletePost(postId);
+      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+    } catch (error: any) {
+      console.error('Error al eliminar el post:', error.message);
+    }
+  };
+
+
+  const [isEditing, setIsEditing] = useState<number | null>(null); // Estado para manejar si estamos en modo edición y para qué post.
+  const [editTitle, setEditTitle] = useState(''); // Estado para el título en modo edición.
+  const [editDescription, setEditDescription] = useState(''); // Estado para la descripción en modo edición.
+
+    const handleEdit = async (postId: number) => {
+      try {
+        await editPost(postId, { title: editTitle, description: editDescription });
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId
+              ? new PostModel(post.id, editTitle, editDescription, post.likes, post.userHasLiked)
+              : post
+          )
+        );
+        setIsEditing(null); // Salimos del modo edición.
+        setEditTitle(''); // Limpiamos los campos de edición.
+        setEditDescription('');
+      } catch (error: any) {
+        console.error('Error al editar el post:', error.message);
+      }
+    };
+  
+  
+  
+
   // Renderizamos el componente.
   return (
     <Container>
@@ -141,16 +185,46 @@ const HomePage: React.FC = () => {
         <Button onClick={handleAddPost}>Agregar Post</Button> {/* Botón para agregar un nuevo post */}
       </FormContainer>
       <PostsContainer>
-        {posts.map((post) => (
-          <PostCard key={post.id}>
-            <PostTitle>{post.title}</PostTitle>
-            <PostDescription>{post.description}</PostDescription>
-            <LikeButton onClick={() => handleLike(post.id)}>
-              {post.userHasLiked ? 'Unlike' : 'Like'} ({post.likes}) {/* Botón para dar like/unlike */}
-            </LikeButton>
-          </PostCard>
-        ))}
-      </PostsContainer>
+  {posts.map((post) => (
+    <PostCard key={post.id}>
+      {isEditing === post.id ? (
+        <>
+          <Input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            placeholder="Edita el título"
+          />
+          <Input
+            type="text"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Edita la descripción"
+          />
+<Button onClick={() => handleEdit(post.id)}>
+  Guardar Cambios
+</Button>
+
+          <Button onClick={() => setIsEditing(null)}>Cancelar</Button>
+        </>
+      ) : (
+        <>
+          <PostTitle>{post.title}</PostTitle>
+          <PostDescription>{post.description}</PostDescription>
+          <LikeButton onClick={() => handleLike(post.id)}>
+            {post.userHasLiked ? 'Unlike' : 'Like'} ({post.likes})
+          </LikeButton>
+          <EditButton onClick={() => {
+            setIsEditing(post.id);
+            setEditTitle(post.title);
+            setEditDescription(post.description);
+          }}>Editar</EditButton>
+          <DeleteButton onClick={() => handleDelete(post.id)}>Eliminar</DeleteButton>
+        </>
+      )}
+    </PostCard>
+  ))}
+</PostsContainer>
     </Container>
   );
 };
@@ -283,6 +357,47 @@ transition: background-color 0.3s ease;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
 }
 `;
+
+const DeleteButton = styled.button`
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+
+  &:hover {
+    background-color: darkred;
+  }
+`;
+
+const EditButton = styled.button`
+  background-color: blue;
+  color: white;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+
+  &:hover {
+    background-color: darkblue;
+  }
+`;
+
+const CancelButton = styled.button`
+  background-color: gray;
+  color: white;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+
+  &:hover {
+    background-color: darkgray;
+  }
+`;
+
+
 
 // Mensaje de error
 const ErrorMessage = styled.div`

@@ -3,42 +3,45 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
-import loginUser from '../services/authService'; // Importamos el componente LoginForm.
-import LoginForm from '../ui/LoginForm'; // Importamos la función loginUser para autenticar al usuario.
+import loginUser from '../services/authService'; 
+import LoginForm from '../ui/LoginForm';
 
+interface UserLog {
+  email: string;
+  password: string;
+}
 
 const LoginPage: React.FC = () => {
-  const [error, setError] = useState(''); // Estado para manejar los mensajes de error.
-  const router = useRouter(); // Inicializamos el hook useRouter para redireccionar al usuario.
+  const [error, setError] = useState<string>(''); 
+  const router = useRouter(); 
 
-  // Función para manejar el inicio de sesión.
-  const handleLogin = async (email: string, password: string) => {
+  const handleLogin = async (user: UserLog) => {
     try {
-      const data = await loginUser(email, password); // Llamamos a la función loginUser para autenticar.
-      localStorage.setItem('token', data.token); // Guardamos el token en localStorage para persistencia.
-      router.push('/home'); // Redirigimos al usuario a la página de inicio tras el login exitoso.
+      const data = await loginUser(user);
+      localStorage.setItem('token', data.token);
+  
+      // Extraer user_id del objeto user
+      const userId = data.user.id; // Aquí estamos accediendo a `user.id`
+      localStorage.setItem('user_id', userId.toString()); // Asegúrate de convertirlo a string
+  
+      router.push('/home');
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message); // Si ocurre un error, lo mostramos al usuario.
+        setError(err.message);
       } else {
-        setError('An unexpected error occurred'); // Mensaje genérico para errores inesperados.
+        setError('An unexpected error occurred');
       }
     }
   };
 
-  // Renderizamos el componente de la página de inicio de sesión.
   return (
     <Container>
       <FormWrapper>
-        <div>
-          <Title>Iniciar sesión</Title> {/* Título de la página de inicio de sesión */}
-        </div>
-        {/* Formulario de inicio de sesión, pasamos la función handleLogin y el estado de error */}
+        <Title>Iniciar sesión</Title>
         <LoginForm onSubmit={handleLogin} error={error} />
-        <div className="text-center">
-          {/* Enlace para redirigir a la página de registro */}
+        <TextCenter>
           <LoginLink href="/register">¿No tienes una cuenta? Regístrate</LoginLink>
-        </div>
+        </TextCenter>
       </FormWrapper>
     </Container>
   );
@@ -46,34 +49,83 @@ const LoginPage: React.FC = () => {
 
 export default LoginPage;
 
+// Estilos organizados
 const Container = styled.div`
-  min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background-color: #f9fafb;
-  padding: 3rem 1rem;
+  align-items: center;
+  height: 100vh;
+  background-color: #f7f7f7;
 `;
 
 const FormWrapper = styled.div`
-  max-width: 28rem;
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
-  space-y: 2rem;
+  max-width: 400px;
+  box-sizing: border-box;
 `;
 
-const Title = styled.h2`
-  margin-top: 1.5rem;
+const Title = styled.h1`
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
   text-align: center;
-  font-size: 1.875rem;
-  font-weight: 800;
-  color: #1f2937;
+`;
+
+const TextCenter = styled.div`
+  text-align: center;
+  margin-top: 1rem;
 `;
 
 const LoginLink = styled(Link)`
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4f46e5;
+  color: #0070f3;
+  text-decoration: none;
+
   &:hover {
-    color: #4338ca;
+    text-decoration: underline;
   }
 `;
+
+// Ajustes para los inputs dentro del formulario
+const InputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const Input = styled.input`
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+`;
+
+const SubmitButton = styled.button`
+  padding: 0.75rem;
+  font-size: 1rem;
+  color: #fff;
+  background-color: #0070f3;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 1rem;
+  width: 100%;
+
+  &:hover {
+    background-color: #005bb5;
+  }
+`;
+
+const ErrorText = styled.p`
+  color: red;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  text-align: center;
+`;
+
+

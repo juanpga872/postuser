@@ -5,13 +5,16 @@ import Util from "./utils/util";
 import cors from "cors";
 
 const app: Express = express();
+
 app.use(cors({
     origin: "http://localhost:3000",
-    methods: "GET,POST,DELETE,UPDATE",
+    methods: "GET,POST,DELETE,PUT", // Cambia 'UPDATE' por 'PUT'
     credentials: true
-}))
+}));
+
 const PORT: number = 3060;
 app.use(express.json());
 app.use("/api", routes);
 
-Util.startServer(app,PORT);
+Util.startServer(app, PORT);
+
